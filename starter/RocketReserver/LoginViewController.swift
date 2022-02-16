@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import KeychainSwift
 
 class LoginViewController: UIViewController {
     
@@ -40,8 +41,31 @@ class LoginViewController: UIViewController {
             self.enableSubmitButton(true)
             return
         }
-        
-        // TODO: Actually log the user in
+        Network.shared.apollo.perform(mutation: LoginMutation(email: email)) { [weak self] result in
+         defer {
+           self?.enableSubmitButton(true)
+         }
+
+         switch result {
+         case .failure(let error):
+           self?.showAlert(title: "Network Error",
+                           message: error.localizedDescription)
+         case .success(let graphQLResult):
+           if let token = graphQLResult.data?.login?.token {
+               let keychain = KeychainSwift()
+               keychain.set(token, forKey: Self.loginKeychainKey)
+               self?.dismiss(animated: true)
+           }
+
+           if let errors = graphQLResult.errors {
+             let message = errors
+                            .map { $0.localizedDescription }
+                            .joined(separator: "\n")
+             self?.showAlert(title: "GraphQL Error(s)",
+                             message: message)
+           }
+         }
+       }
     }
     
     private func validate(email: String) -> Bool {

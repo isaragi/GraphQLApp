@@ -7,18 +7,24 @@
 //
 
 import UIKit
+import SDWebImage
+import Apollo
 
 class LaunchesViewController: UITableViewController {
     enum ListSection: Int, CaseIterable {
       case launches
+      case loading
     }
     
     var detailViewController: DetailViewController? = nil
     var launches = [LaunchListQuery.Data.Launch.Launch]()
+    private var lastConnection: LaunchListQuery.Data.Launch?
+    private var activeRequest: Cancellable?
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        self.loadLaunches()
+        self.loadMoreLaunchesIfTheyExist()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -36,25 +42,56 @@ class LaunchesViewController: UITableViewController {
             return false
         }
         
-        // TODO: Handle whether a segue should be performed depending on what row in what section was tapped
-        return true
+        guard let listSection = ListSection(rawValue: selectedIndexPath.section) else {
+            assertionFailure("Invalid section")
+            return false
+        }
+        
+        switch listSection {
+        case .launches:
+            return true
+        case .loading:
+            self.tableView.deselectRow(at: selectedIndexPath, animated: true)
+            
+            if self.activeRequest == nil {
+                self.loadMoreLaunchesIfTheyExist()
+            } // else, let the active request finish loading
+            
+            self.tableView.reloadRows(at: [selectedIndexPath], with: .automatic)
+            
+            // In either case, don't perform the segue
+            return false
+        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "showProfile" {
-            // No setup is required.
             return
         }
     
-        // TODO: Handle setting which launch was selected
-        guard
-            let destination = segue.destination as? UINavigationController,
-            let detail = destination.topViewController as? DetailViewController else {
-                assertionFailure("Wrong kind of destination")
-                return
-            }
-    
-        self.detailViewController = detail
+        guard let selectedIndexPath = self.tableView.indexPathForSelectedRow else {
+          return
+        }
+            
+        guard let listSection = ListSection(rawValue: selectedIndexPath.section) else {
+          assertionFailure("Invalid section")
+          return
+        }
+            
+        switch listSection {
+        case .launches:
+            guard let destination = segue.destination as? UINavigationController,
+                  let detailViewController = destination.topViewController as? DetailViewController else {
+                      assertionFailure("Wrong kind of destination")
+                      return
+                  }
+            
+            let launch = self.launches[selectedIndexPath.row]
+            detailViewController.launchID = launch.id
+            self.detailViewController = detailViewController
+        case .loading:
+            assertionFailure("Shouldn't have gotten here!")
+        }
     }
     
     // MARK: - IBActions
@@ -83,56 +120,82 @@ class LaunchesViewController: UITableViewController {
         switch listSection {
         case .launches:
           return self.launches.count
+        case .loading:
+            let hasMore = self.lastConnection?.hasMore ?? false
+            return hasMore ? 1 : 0
         }
     }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
-
+        
+        cell.imageView?.image = nil
+        cell.textLabel?.text = nil
+        cell.detailTextLabel?.text = nil
+        
         guard let listSection = ListSection(rawValue: indexPath.section) else {
-          assertionFailure("Invalid section")
-          return cell
+            assertionFailure("Invalid section")
+            return cell
         }
-          
+        
         switch listSection {
         case .launches:
-          let launch = self.launches[indexPath.row]
-          cell.textLabel?.text = launch.site
+            let launch = self.launches[indexPath.row]
+            cell.textLabel?.text = launch.mission?.name
+            cell.detailTextLabel?.text = launch.site
+            
+            let placeholder = UIImage(named: "placeholder")!
+            
+            if let missionPatch = launch.mission?.missionPatch {
+                cell.imageView?.sd_setImage(with: URL(string: missionPatch)!, placeholderImage: placeholder)
+            } else {
+                cell.imageView?.image = placeholder
+            }
+        case .loading:
+            cell.textLabel?.text = self.activeRequest != nil ? "Loading..." : "Tap to load more"
         }
-          
+        
         return cell
     }
     
-    private func loadLaunches() {
-        Network.shared.apollo
-          .fetch(query: LaunchListQuery()) { [weak self] result in
-          
-          guard let self = self else {
+    private func loadMoreLaunchesIfTheyExist() {
+        guard let connection = self.lastConnection else {
+            self.loadMoreLaunches(from: nil)
             return
-          }
-
-          defer {
-            self.tableView.reloadData()
-          }
-                  
-          switch result {
-          case .success(let graphQLResult):
-              if let launchConnection = graphQLResult.data?.launches {
-                self.launches.append(contentsOf: launchConnection.launches.compactMap { $0 })
-              }
-                      
-              if let errors = graphQLResult.errors {
-                let message = errors
-                      .map { $0.localizedDescription }
-                      .joined(separator: "\n")
-                self.showAlert(title: "GraphQL Error(s)",
-                               message: message)
-              }
-          case .failure(let error):
-            // From `UIViewController+Alert.swift`
-            self.showAlert(title: "Network Error",
-                           message: error.localizedDescription)
-          }
+        }
+        
+        guard connection.hasMore else { return }
+        
+        self.loadMoreLaunches(from: connection.cursor)
+    }
+    
+    private func loadMoreLaunches(from cursor: String?) {
+        self.activeRequest = Network.shared.apollo.fetch(query: LaunchListQuery(cursor: cursor)) { [weak self] result in
+            guard let self = self else { return }
+            
+            self.activeRequest = nil
+            defer {
+                self.tableView.reloadData()
+            }
+            
+            switch result {
+            case .success(let graphQLResult):
+                if let launchConnection = graphQLResult.data?.launches {
+                    self.lastConnection = launchConnection
+                    self.launches.append(contentsOf: launchConnection.launches.compactMap { $0 })
+                }
+                
+                if let errors = graphQLResult.errors {
+                    let message = errors
+                        .map { $0.localizedDescription }
+                        .joined(separator: "\n")
+                    self.showAlert(title: "GraphQL Error(s)",
+                                   message: message)
+                }
+            case .failure(let error):
+                self.showAlert(title: "Network Error",
+                               message: error.localizedDescription)
+            }
         }
     }
 }

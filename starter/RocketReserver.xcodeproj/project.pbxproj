@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		33257088276A92B500F3E8B4 /* NotificationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 33257087276A92B500F3E8B4 /* NotificationView.swift */; };
+		7451877227BD58630043222B /* TokenAddingInterceptor.swift.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7451877127BD58630043222B /* TokenAddingInterceptor.swift.swift */; };
+		7451877427BD59900043222B /* NetworkInterceptorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7451877327BD59900043222B /* NetworkInterceptorProvider.swift */; };
+		7451877627BD5FFF0043222B /* BookTrip.graphql in Resources */ = {isa = PBXBuildFile; fileRef = 7451877527BD5FFF0043222B /* BookTrip.graphql */; };
 		74D6854727BBE897002CDD21 /* Apollo in Frameworks */ = {isa = PBXBuildFile; productRef = 74D6854627BBE897002CDD21 /* Apollo */; };
 		74D6854D27BBFFFA002CDD21 /* API.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74D6854C27BBFFFA002CDD21 /* API.swift */; };
 		74D6854F27BC025D002CDD21 /* Network.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74D6854E27BC025D002CDD21 /* Network.swift */; };
@@ -27,10 +30,16 @@
 
 /* Begin PBXFileReference section */
 		33257087276A92B500F3E8B4 /* NotificationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationView.swift; sourceTree = "<group>"; };
+		7451877127BD58630043222B /* TokenAddingInterceptor.swift.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenAddingInterceptor.swift.swift; sourceTree = "<group>"; };
+		7451877327BD59900043222B /* NetworkInterceptorProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkInterceptorProvider.swift; sourceTree = "<group>"; };
+		7451877527BD5FFF0043222B /* BookTrip.graphql */ = {isa = PBXFileReference; lastKnownFileType = text; path = BookTrip.graphql; sourceTree = "<group>"; };
+		7451877727BD636C0043222B /* CancelTrip.graphql */ = {isa = PBXFileReference; lastKnownFileType = text; path = CancelTrip.graphql; sourceTree = "<group>"; };
 		74D6854927BBF6D0002CDD21 /* schema.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = schema.json; sourceTree = "<group>"; };
 		74D6854B27BBFE86002CDD21 /* LaunchList.graphql */ = {isa = PBXFileReference; lastKnownFileType = text; path = LaunchList.graphql; sourceTree = "<group>"; };
 		74D6854C27BBFFFA002CDD21 /* API.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = API.swift; sourceTree = "<group>"; };
 		74D6854E27BC025D002CDD21 /* Network.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Network.swift; sourceTree = "<group>"; };
+		74D6855027BD3D53002CDD21 /* LaunchDetails.graphql */ = {isa = PBXFileReference; lastKnownFileType = text; path = LaunchDetails.graphql; sourceTree = "<group>"; };
+		74D6855127BD4B7B002CDD21 /* Login.graphql */ = {isa = PBXFileReference; lastKnownFileType = text; path = Login.graphql; sourceTree = "<group>"; };
 		9B0705F823AC34CB00DCA904 /* ProfileViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileViewController.swift; sourceTree = "<group>"; };
 		9B4AA8A9239BDDB7003E1300 /* UIViewController+Alert.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "UIViewController+Alert.swift"; sourceTree = "<group>"; };
 		9B685F55238BE71F0084DA15 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
@@ -88,12 +97,18 @@
 				33257087276A92B500F3E8B4 /* NotificationView.swift */,
 				74D6854C27BBFFFA002CDD21 /* API.swift */,
 				74D6854E27BC025D002CDD21 /* Network.swift */,
+				7451877127BD58630043222B /* TokenAddingInterceptor.swift.swift */,
+				7451877327BD59900043222B /* NetworkInterceptorProvider.swift */,
 				9B8B0EFD237CE6A8001326EB /* Main.storyboard */,
 				9B8B0F00237CE6AB001326EB /* Assets.xcassets */,
 				9B8B0F02237CE6AB001326EB /* LaunchScreen.storyboard */,
 				9B8B0F05237CE6AB001326EB /* Info.plist */,
 				74D6854927BBF6D0002CDD21 /* schema.json */,
 				74D6854B27BBFE86002CDD21 /* LaunchList.graphql */,
+				74D6855027BD3D53002CDD21 /* LaunchDetails.graphql */,
+				74D6855127BD4B7B002CDD21 /* Login.graphql */,
+				7451877527BD5FFF0043222B /* BookTrip.graphql */,
+				7451877727BD636C0043222B /* CancelTrip.graphql */,
 			);
 			path = RocketReserver;
 			sourceTree = "<group>";
@@ -170,6 +185,7 @@
 				9B8B0F04237CE6AB001326EB /* LaunchScreen.storyboard in Resources */,
 				9B8B0F01237CE6AB001326EB /* Assets.xcassets in Resources */,
 				9B8B0EFF237CE6A8001326EB /* Main.storyboard in Resources */,
+				7451877627BD5FFF0043222B /* BookTrip.graphql in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -207,8 +223,10 @@
 				9B8B0EF8237CE6A8001326EB /* SceneDelegate.swift in Sources */,
 				9B8B0EFA237CE6A8001326EB /* LaunchesViewController.swift in Sources */,
 				9B8B0EFC237CE6A8001326EB /* DetailViewController.swift in Sources */,
+				7451877427BD59900043222B /* NetworkInterceptorProvider.swift in Sources */,
 				9B0705F923AC34CB00DCA904 /* ProfileViewController.swift in Sources */,
 				9B4AA8AA239BDDB7003E1300 /* UIViewController+Alert.swift in Sources */,
+				7451877227BD58630043222B /* TokenAddingInterceptor.swift.swift in Sources */,
 				74D6854D27BBFFFA002CDD21 /* API.swift in Sources */,
 				33257088276A92B500F3E8B4 /* NotificationView.swift in Sources */,
 			);
