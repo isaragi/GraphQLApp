@@ -20,10 +20,12 @@ class LaunchesViewController: UITableViewController {
     var launches = [LaunchListQuery.Data.Launch.Launch]()
     private var lastConnection: LaunchListQuery.Data.Launch?
     private var activeRequest: Cancellable?
+    private var activeSubscription: Cancellable?
 
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        self.startSubscription()
         self.loadMoreLaunchesIfTheyExist()
     }
     
@@ -31,7 +33,43 @@ class LaunchesViewController: UITableViewController {
         clearsSelectionOnViewWillAppear = splitViewController!.isCollapsed
         super.viewWillAppear(animated)
     }
-        
+      
+    private func startSubscription() {
+        activeSubscription = Network.shared.apollo.subscribe(subscription: TripsBookedSubscription()) { result in
+            switch result {
+            case .failure(let error):
+                self.showAlert(title: "NetworkError",
+                               message: error.localizedDescription)
+            case .success(let graphQLResult):
+                if let errors = graphQLResult.errors {
+                    self.showAlertForErrors(errors)
+                } else if let tripsBooked = graphQLResult.data?.tripsBooked {
+                    self.handleTripsBooked(value: tripsBooked)
+                } else {
+                    // There was no data and there were no errors, do nothing.
+                }
+            }
+        }
+    }
+    
+    private func handleTripsBooked(value: Int) {
+        var message: String
+        switch value {
+        case 1:
+            message = "A new trip was booked! 🚀"
+        case -1:
+            message = "A trip was cancelled! 😭"
+        default:
+            self.showAlert(title: "Unexpected value",
+                           message: " Subscription returned unexpected value: \(value)")
+            return
+        }
+
+        NotificationView.show(in: self.navigationController!.view,
+                              with: message,
+                              for: 4.0)
+    }
+
     override func shouldPerformSegue(withIdentifier identifier: String, sender: Any?) -> Bool {
         if identifier == "showProfile" {
             // This should always occur
