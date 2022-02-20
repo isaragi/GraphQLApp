@@ -1,5 +1,5 @@
 const { ApolloServer, gql } = require('apollo-server')
-const axios = require('axios')
+const { RESTDataSource } = require('apollo-datasource-rest')
 
 const typeDefs = gql`
   type User {
@@ -26,43 +26,57 @@ const typeDefs = gql`
 
 const resolvers = {
   Query: {
-    hello: (parent, args) => {
-      console.log('parent', parent)
-      console.log('args', args)
-      return `Hello ${args.name}`
+    hello: (_, args) => `Hello ${args.name}`,
+    users: async (_, __, { dataSources }) => {
+      return dataSources.jsonPlaceAPI.getUsers();
     },
-    users: async () => {
-      const response = await axios.get(
-        'https://jsonplaceholder.typicode.com/users'
-      );
-      return response.data;
+    user: async (_, args, { dataSources }) => {
+      return dataSources.jsonPlaceAPI.getUser(args.id);
     },
-  user: async (parent, args) => {
-    let response = await axios.get(
-      `https://jsonplaceholder.typicode.com/users/${args.id}`
-    );
-    return response.data;
-  },
-    posts: async () => {
-      const response = await axios.get(
-        'https://jsonplaceholder.typicode.com/posts'
-      );
-      return response.data;
+    posts: async (_, __, { dataSources }) => {
+      return dataSources.jsonPlaceAPI.getPosts();
     },
   },
-    
   User: {
-    myPosts: async (parent) => {
-      const response = await axios.get(
-        'https://jsonplaceholder.typicode.com/posts'
-      );
-      const myPosts = response.data.filter((post) => post.userId == parent.id);
+    myPosts: async (parent, __, { dataSources }) => {
+      const posts = await dataSources.jsonPlaceAPI.getPosts();
+      const myPosts = posts.filter((post) => post.userId == parent.id);
       return myPosts;
     },
   },
 };
 
-const server = new ApolloServer({ typeDefs, resolvers })
+class jsonPlaceAPI extends RESTDataSource {
+    constructor() {
+        super();
+        this.baseURL = 'https://jsonplaceholder.typicode.com/';
+    }
+    
+    async getUsers() {
+        const data = await this.get('/users');
+        return data;
+    }
+    async getUser(id) {
+        const data = await this.get(`/users/${id}`);
+        return data;
+    }
+    async getPosts() {
+        const data = await this.get('/posts');
+        return data;
+    }
+}
+
+
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  dataSources: () => {
+    return {
+      jsonPlaceAPI: new jsonPlaceAPI(),
+    };
+  },
+});
+
 
 server.listen().then(({ url }) => {
     console.log(`🚀  Server ready at ${url}`)
